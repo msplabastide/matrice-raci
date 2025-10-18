@@ -117,52 +117,183 @@
             { id: 'pharmacien', label: 'PHARMACIEN' },
             { id: 'dieteticienne', label: 'DIÉTÉTICIENNE' },
             { id: 'biologiste', label: 'BIOLOGISTE' },
-            { id: 'cardiologue', label: 'CARDIOLOGUE' },
+            { id: 'orthophoniste', label: 'ORTHOPHONISTE' },
+            { id: 'coordinatrice', label: 'COORDINATRICE' },
+            { id: 'assistante', label: 'ASSISTANTE MÉDICALE' },
+            { id: 'kine', label: 'KINÉSITHÉRAPEUTE' },
+            { id: 'apa', label: 'APA' },
+            { id: 'ergo', label: 'ERGOTHÉRAPEUTE' },
           ];
 
-          // Données initiales par défaut pour les lignes
+          // Données initiales par défaut pour les lignes - EXEMPLES PÉDAGOGIQUES
           const defaultRows = [
+            // SECTION 1 : ACCUEIL ET COORDINATION
             {
               id: 'row1',
-              task: '1.1 Prescrire carnet de poids + seuil d\'alerte',
+              task: 'Accueil téléphonique du patient',
               sectionId: 'section1',
-              assignments: { mg: 'A/R', ide: 'I', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', cardiologue: 'I' }
+              assignments: { mg: 'I', ide: 'I', asalee: 'C', pharmacien: '', dieteticienne: '', biologiste: '', orthophoniste: '', coordinatrice: 'C', assistante: 'A/R', kine: '', apa: '', ergo: '' }
             },
             {
               id: 'row2',
-              task: '1.2 Vérifier le carnet lors des visites',
+              task: 'Gestion du dossier patient informatisé',
               sectionId: 'section1',
-              assignments: { mg: 'I', ide: 'R', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', cardiologue: 'I' }
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'R', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
             },
             {
               id: 'row3',
-              task: '1.3 Éduquer : lien sel / rétention d\'eau',
+              task: 'Coordination du parcours de soins',
               sectionId: 'section1',
-              assignments: { mg: 'C', ide: 'I', asalee: 'I', pharmacien: 'C', dieteticienne: 'R', biologiste: 'I', cardiologue: 'I' }
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'R', assistante: 'C', kine: 'C', apa: 'C', ergo: 'C' }
             },
+            
+            // SECTION 2 : DIAGNOSTIC ET PRESCRIPTION
             {
               id: 'row4',
-              task: '1.4 Alerter si dépassement du seuil (>2 kg / 3 jours)',
-              sectionId: 'section1',
-              assignments: { mg: 'I', ide: 'R', asalee: 'C', pharmacien: 'C', dieteticienne: 'I', biologiste: 'I', cardiologue: 'I' }
+              task: 'Consultation de diagnostic initial',
+              sectionId: 'section2',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
             },
             {
               id: 'row5',
-              task: '2.1 Prescrire dosage BNP/NT-proBNP',
+              task: 'Prescription des examens biologiques',
               sectionId: 'section2',
-              assignments: { mg: 'A/R', ide: 'I', asalee: 'I', pharmacien: 'C', dieteticienne: 'I', biologiste: 'C', cardiologue: 'I' }
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'I', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
             },
             {
               id: 'row6',
-              task: '2.2 Réaliser le prélèvement sanguin',
+              task: 'Interprétation des résultats biologiques',
               sectionId: 'section2',
-              assignments: { mg: 'I', ide: 'R', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', cardiologue: 'I' }
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            
+            // SECTION 3 : SOINS ET SUIVI INFIRMIER
+            {
+              id: 'row7',
+              task: 'Réalisation des soins infirmiers',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'A/R', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row8',
+              task: 'Surveillance des paramètres vitaux',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'R', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'C', apa: 'C', ergo: 'I' }
+            },
+            {
+              id: 'row9',
+              task: 'Éducation thérapeutique du patient',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'R', asalee: 'A', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'C', assistante: 'C', kine: 'C', apa: 'C', ergo: 'C' }
+            },
+            
+            // SECTION 4 : RÉÉDUCATION ET RÉADAPTATION
+            {
+              id: 'row10',
+              task: 'Prescription de séances de kinésithérapie',
+              sectionId: 'section4',
+              assignments: { mg: 'A/R', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'C', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row11',
+              task: 'Réalisation des séances de rééducation motrice',
+              sectionId: 'section4',
+              assignments: { mg: 'C', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'A/R', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row12',
+              task: 'Prescription activité physique adaptée',
+              sectionId: 'section4',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row13',
+              task: 'Animation des séances APA',
+              sectionId: 'section4',
+              assignments: { mg: 'I', ide: 'I', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'A/R', ergo: 'C' }
+            },
+            {
+              id: 'row14',
+              task: 'Évaluation ergothérapique du domicile',
+              sectionId: 'section4',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'I', kine: 'C', apa: 'I', ergo: 'A/R' }
+            },
+            
+            // SECTION 5 : NUTRITION ET DIÉTÉTIQUE
+            {
+              id: 'row15',
+              task: 'Bilan nutritionnel initial',
+              sectionId: 'section5',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'A/R', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row16',
+              task: 'Élaboration du plan alimentaire personnalisé',
+              sectionId: 'section5',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'R', biologiste: 'C', orthophoniste: 'C', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row17',
+              task: 'Suivi et ajustement du régime alimentaire',
+              sectionId: 'section5',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'A/R', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'C', ergo: 'I' }
+            },
+            
+            // SECTION 6 : THÉRAPEUTIQUE MÉDICAMENTEUSE
+            {
+              id: 'row18',
+              task: 'Prescription du traitement médicamenteux',
+              sectionId: 'section6',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row19',
+              task: 'Analyse pharmaceutique de l\'ordonnance',
+              sectionId: 'section6',
+              assignments: { mg: 'I', ide: 'I', asalee: 'I', pharmacien: 'A/R', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row20',
+              task: 'Conciliation médicamenteuse',
+              sectionId: 'section6',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'R', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row21',
+              task: 'Éducation à l\'observance thérapeutique',
+              sectionId: 'section6',
+              assignments: { mg: 'C', ide: 'A', asalee: 'C', pharmacien: 'R', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'C', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            
+            // SECTION 7 : RÉÉDUCATION DU LANGAGE
+            {
+              id: 'row22',
+              task: 'Bilan orthophonique initial',
+              sectionId: 'section7',
+              assignments: { mg: 'C', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'A/R', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row23',
+              task: 'Séances de rééducation orthophonique',
+              sectionId: 'section7',
+              assignments: { mg: 'I', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'A/R', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row24',
+              task: 'Adaptation des troubles de la déglutition',
+              sectionId: 'section7',
+              assignments: { mg: 'C', ide: 'C', asalee: 'I', pharmacien: 'I', dieteticienne: 'R', biologiste: 'I', orthophoniste: 'A', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
             },
           ];
 
           const defaultSections = [
-            { id: 'section1', name: '1. Surveillance du poids', collapsed: false },
-            { id: 'section2', name: '2. Bilan biologique', collapsed: false },
+            { id: 'section1', name: '1. Accueil et Coordination', collapsed: false },
+            { id: 'section2', name: '2. Diagnostic et Prescription', collapsed: false },
+            { id: 'section3', name: '3. Soins et Suivi Infirmier', collapsed: false },
+            { id: 'section4', name: '4. Rééducation et Réadaptation', collapsed: false },
+            { id: 'section5', name: '5. Nutrition et Diététique', collapsed: false },
+            { id: 'section6', name: '6. Thérapeutique Médicamenteuse', collapsed: false },
+            { id: 'section7', name: '7. Rééducation du Langage', collapsed: false },
           ];
 
           // Chargement depuis localStorage ou données par défaut
@@ -186,8 +317,8 @@
               rows: defaultRows,
               columns: defaultColumns,
               sections: defaultSections,
-              title: 'MATRICE RACI',
-              subtitle: 'SUIVI CARDIOLOGIQUE INSUFFISANCE CARDIAQUE',
+              title: 'MATRICE RACI - MODÈLE PÉDAGOGIQUE',
+              subtitle: 'EXEMPLE DE RÉPARTITION DES RÔLES EN MSP',
               colorTheme: 'green',
               autoNumbering: true
             };
@@ -497,16 +628,16 @@
               setRows(defaultRows);
               setColumns(defaultColumns);
               setSections(defaultSections);
-              setTitle('MATRICE RACI');
-              setSubtitle('SUIVI CARDIOLOGIQUE INSUFFISANCE CARDIAQUE');
+              setTitle('MATRICE RACI - MODÈLE PÉDAGOGIQUE');
+              setSubtitle('EXEMPLE DE RÉPARTITION DES RÔLES EN MSP');
               setColorTheme('green');
               setAutoNumbering(true);
               setHistory([{
                 rows: defaultRows,
                 columns: defaultColumns,
                 sections: defaultSections,
-                title: 'MATRICE RACI',
-                subtitle: 'SUIVI CARDIOLOGIQUE INSUFFISANCE CARDIAQUE'
+                title: 'MATRICE RACI - MODÈLE PÉDAGOGIQUE',
+                subtitle: 'EXEMPLE DE RÉPARTITION DES RÔLES EN MSP'
               }]);
               setHistoryIndex(0);
             }
