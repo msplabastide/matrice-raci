@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice RACI v4.0 - Ultimate Edition</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: #f8f9fa;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            user-select: none;
+        }
+        .section-header:hover {
+            opacity: 0.9;
+        }
+        .help-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .help-panel.open {
+            max-height: 2000px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Définition des thèmes de couleurs
+        const COLOR_THEMES = {
+          green: {
+            name: 'Vert professionnel',
+            R: '#3e6b61',
+            A: '#4e8577',
+            C: '#6fa89a',
+            I: '#8fbfb5'
+          },
+          blue: {
+            name: 'Bleu corporate',
+            R: '#1e3a8a',
+            A: '#3b82f6',
+            C: '#60a5fa',
+            I: '#93c5fd'
+          },
+          purple: {
+            name: 'Violet moderne',
+            R: '#6b21a8',
+            A: '#9333ea',
+            C: '#a855f7',
+            I: '#c084fc'
+          },
+          orange: {
+            name: 'Orange dynamique',
+            R: '#9a3412',
+            A: '#ea580c',
+            C: '#fb923c',
+            I: '#fdba74'
+          }
+        };
+
+        const MatriceRaci = () => {
+          // Définition des catégories possibles
+          const categories = ['R', 'A', 'C', 'I', 'A/R', ''];
+
+          // Données initiales par défaut pour les colonnes
+          const defaultColumns = [
+            { id: 'mg', label: 'MG' },
+            { id: 'ide', label: 'IDE' },
+            { id: 'asalee', label: 'ASALÉE' },
+            { id: 'pharmacien', label: 'PHARMACIEN' },
+            { id: 'dieteticienne', label: 'DIÉTÉTICIEN' },
+            { id: 'biologiste', label: 'BIOLOGISTE' },
+            { id: 'orthophoniste', label: 'ORTHOPHON.' },
+            { id: 'coordinatrice', label: 'COORDINAT.' },
+            { id: 'assistante', label: 'ASS. MÉD.' },
+            { id: 'kine', label: 'KINÉ' },
+            { id: 'apa', label: 'APA' },
+            { id: 'ergo', label: 'ERGO' },
+          ];
+
+          // Données initiales par défaut pour les lignes - EXEMPLES PÉDAGOGIQUES
+          const defaultRows = [
+            // SECTION 1 : ACCUEIL ET COORDINATION
+            {
+              id: 'row1',
+              task: 'Accueil téléphonique du patient',
+              sectionId: 'section1',
+              assignments: { mg: 'I', ide: 'I', asalee: 'C', pharmacien: '', dieteticienne: '', biologiste: '', orthophoniste: '', coordinatrice: 'C', assistante: 'A/R', kine: '', apa: '', ergo: '' }
+            },
+            {
+              id: 'row2',
+              task: 'Gestion du dossier patient informatisé',
+              sectionId: 'section1',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'R', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row3',
+              task: 'Coordination du parcours de soins',
+              sectionId: 'section1',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'R', assistante: 'C', kine: 'C', apa: 'C', ergo: 'C' }
+            },
+            
+            // SECTION 2 : DIAGNOSTIC ET PRESCRIPTION
+            {
+              id: 'row4',
+              task: 'Consultation de diagnostic initial',
+              sectionId: 'section2',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row5',
+              task: 'Prescription des examens biologiques',
+              sectionId: 'section2',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'I', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row6',
+              task: 'Interprétation des résultats biologiques',
+              sectionId: 'section2',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            
+            // SECTION 3 : SOINS ET SUIVI INFIRMIER
+            {
+              id: 'row7',
+              task: 'Réalisation des soins infirmiers',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'A/R', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row8',
+              task: 'Surveillance des paramètres vitaux',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'R', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'C', apa: 'C', ergo: 'I' }
+            },
+            {
+              id: 'row9',
+              task: 'Éducation thérapeutique du patient',
+              sectionId: 'section3',
+              assignments: { mg: 'C', ide: 'R', asalee: 'A', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'C', assistante: 'C', kine: 'C', apa: 'C', ergo: 'C' }
+            },
+            
+            // SECTION 4 : RÉÉDUCATION ET RÉADAPTATION
+            {
+              id: 'row10',
+              task: 'Prescription de séances de kinésithérapie',
+              sectionId: 'section4',
+              assignments: { mg: 'A/R', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'C', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row11',
+              task: 'Réalisation des séances de rééducation motrice',
+              sectionId: 'section4',
+              assignments: { mg: 'C', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'A/R', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row12',
+              task: 'Prescription activité physique adaptée',
+              sectionId: 'section4',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row13',
+              task: 'Animation des séances APA',
+              sectionId: 'section4',
+              assignments: { mg: 'I', ide: 'I', asalee: 'C', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'A/R', ergo: 'C' }
+            },
+            {
+              id: 'row14',
+              task: 'Évaluation ergothérapique du domicile',
+              sectionId: 'section4',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'I', kine: 'C', apa: 'I', ergo: 'A/R' }
+            },
+            
+            // SECTION 5 : NUTRITION ET DIÉTÉTIQUE
+            {
+              id: 'row15',
+              task: 'Bilan nutritionnel initial',
+              sectionId: 'section5',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'A/R', biologiste: 'C', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row16',
+              task: 'Élaboration du plan alimentaire personnalisé',
+              sectionId: 'section5',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'R', biologiste: 'C', orthophoniste: 'C', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'C', ergo: 'C' }
+            },
+            {
+              id: 'row17',
+              task: 'Suivi et ajustement du régime alimentaire',
+              sectionId: 'section5',
+              assignments: { mg: 'C', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'A/R', biologiste: 'I', orthophoniste: 'C', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'C', ergo: 'I' }
+            },
+            
+            // SECTION 6 : THÉRAPEUTIQUE MÉDICAMENTEUSE
+            {
+              id: 'row18',
+              task: 'Prescription du traitement médicamenteux',
+              sectionId: 'section6',
+              assignments: { mg: 'A/R', ide: 'C', asalee: 'C', pharmacien: 'C', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row19',
+              task: 'Analyse pharmaceutique de l\'ordonnance',
+              sectionId: 'section6',
+              assignments: { mg: 'I', ide: 'I', asalee: 'I', pharmacien: 'A/R', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row20',
+              task: 'Conciliation médicamenteuse',
+              sectionId: 'section6',
+              assignments: { mg: 'A', ide: 'C', asalee: 'C', pharmacien: 'R', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'C', kine: 'I', apa: 'I', ergo: 'I' }
+            },
+            {
+              id: 'row21',
+              task: 'Éducation à l\'observance thérapeutique',
+              sectionId: 'section6',
+              assignments: { mg: 'C', ide: 'A', asalee: 'C', pharmacien: 'R', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'I', coordinatrice: 'C', assistante: 'C', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            
+            // SECTION 7 : RÉÉDUCATION DU LANGAGE
+            {
+              id: 'row22',
+              task: 'Bilan orthophonique initial',
+              sectionId: 'section7',
+              assignments: { mg: 'C', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'I', biologiste: 'I', orthophoniste: 'A/R', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row23',
+              task: 'Séances de rééducation orthophonique',
+              sectionId: 'section7',
+              assignments: { mg: 'I', ide: 'I', asalee: 'I', pharmacien: 'I', dieteticienne: 'C', biologiste: 'I', orthophoniste: 'A/R', coordinatrice: 'I', assistante: 'I', kine: 'C', apa: 'I', ergo: 'C' }
+            },
+            {
+              id: 'row24',
+              task: 'Adaptation des troubles de la déglutition',
+              sectionId: 'section7',
+              assignments: { mg: 'C', ide: 'C', asalee: 'I', pharmacien: 'I', dieteticienne: 'R', biologiste: 'I', orthophoniste: 'A', coordinatrice: 'I', assistante: 'I', kine: 'I', apa: 'I', ergo: 'C' }
+            },
+          ];
+
+          const defaultSections = [
+            { id: 'section1', name: '1. Accueil et Coordination', collapsed: false },
+            { id: 'section2', name: '2. Diagnostic et Prescription', collapsed: false },
+            { id: 'section3', name: '3. Soins et Suivi Infirmier', collapsed: false },
+            { id: 'section4', name: '4. Rééducation et Réadaptation', collapsed: false },
+            { id: 'section5', name: '5. Nutrition et Diététique', collapsed: false },
+            { id: 'section6', name: '6. Thérapeutique Médicamenteuse', collapsed: false },
+            { id: 'section7', name: '7. Rééducation du Langage', collapsed: false },
+          ];
+
+          // Chargement depuis localStorage ou données par défaut
+          const loadFromStorage = () => {
+            try {
+              const savedData = localStorage.getItem('matriceRaciData');
+              if (savedData) {
+                const parsed = JSON.parse(savedData);
+                return {
+                  ...parsed,
+                  columns: parsed.columns || defaultColumns,
+                  sections: parsed.sections || defaultSections,
+                  colorTheme: parsed.colorTheme || 'green',
+                  autoNumbering: parsed.autoNumbering !== undefined ? parsed.autoNumbering : true
+                };
+              }
+            } catch (e) {
+              console.error('Erreur de chargement:', e);
+            }
+            return {
+              rows: defaultRows,
+              columns: defaultColumns,
+              sections: defaultSections,
+              title: 'MATRICE RACI - MODÈLE PÉDAGOGIQUE',
+              subtitle: 'EXEMPLE DE RÉPARTITION DES RÔLES EN MSP',
+              colorTheme: 'green',
+              autoNumbering: true
+            };
+          };
+
+          const initialData = loadFromStorage();
+          const [rows, setRows] = useState(initialData.rows);
+          const [columns, setColumns] = useState(initialData.columns);
+          const [sections, setSections] = useState(initialData.sections);
+          const [title, setTitle] = useState(initialData.title);
+          const [subtitle, setSubtitle] = useState(initialData.subtitle);
+          const [colorTheme, setColorTheme] = useState(initialData.colorTheme);
+          const [autoNumbering, setAutoNumbering] = useState(initialData.autoNumbering);
+          const [showHelp, setShowHelp] = useState(false);
+          const [pdfOrientation, setPdfOrientation] = useState('landscape');
+
+          // Gestion de l'historique pour Undo/Redo
+          const [history, setHistory] = useState([{
+            rows: initialData.rows,
+            columns: initialData.columns,
+            sections: initialData.sections,
+            title: initialData.title,
+            subtitle: initialData.subtitle
+          }]);
+          const [historyIndex, setHistoryIndex] = useState(0);
+          const isUndoRedoAction = useRef(false);
+
+          // Sauvegarder l'état dans l'historique
+          const saveToHistory = (newRows, newColumns, newSections, newTitle, newSubtitle) => {
+            if (isUndoRedoAction.current) {
+              isUndoRedoAction.current = false;
+              return;
+            }
+
+            const newState = {
+              rows: newRows,
+              columns: newColumns,
+              sections: newSections,
+              title: newTitle,
+              subtitle: newSubtitle
+            };
+
+            const newHistory = history.slice(0, historyIndex + 1);
+            newHistory.push(newState);
+
+            if (newHistory.length > 50) {
+              newHistory.shift();
+              setHistoryIndex(historyIndex);
+            } else {
+              setHistoryIndex(historyIndex + 1);
+            }
+
+            setHistory(newHistory);
+          };
+
+          // Fonction Undo (Ctrl+Z)
+          const undo = () => {
+            if (historyIndex > 0) {
+              isUndoRedoAction.current = true;
+              const newIndex = historyIndex - 1;
+              const previousState = history[newIndex];
+              setRows(previousState.rows);
+              setColumns(previousState.columns);
+              setSections(previousState.sections);
+              setTitle(previousState.title);
+              setSubtitle(previousState.subtitle);
+              setHistoryIndex(newIndex);
+            }
+          };
+
+          // Fonction Redo (Ctrl+Y)
+          const redo = () => {
+            if (historyIndex < history.length - 1) {
+              isUndoRedoAction.current = true;
+              const newIndex = historyIndex + 1;
+              const nextState = history[newIndex];
+              setRows(nextState.rows);
+              setColumns(nextState.columns);
+              setSections(nextState.sections);
+              setTitle(nextState.title);
+              setSubtitle(nextState.subtitle);
+              setHistoryIndex(newIndex);
+            }
+          };
+
+          // Gestion des raccourcis clavier
+          useEffect(() => {
+            const handleKeyDown = (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+              } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                redo();
+              }
+            };
+
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+          }, [historyIndex, history]);
+
+          // Sauvegarde automatique dans localStorage
+          useEffect(() => {
+            try {
+              const dataToSave = {
+                rows,
+                columns,
+                sections,
+                title,
+                subtitle,
+                colorTheme,
+                autoNumbering
+              };
+              localStorage.setItem('matriceRaciData', JSON.stringify(dataToSave));
+            } catch (e) {
+              console.error('Erreur de sauvegarde:', e);
+            }
+          }, [rows, columns, sections, title, subtitle, colorTheme, autoNumbering]);
+
+          // Fonction de validation d'une ligne
+          const validateRow = (assignments) => {
+            const values = Object.values(assignments);
+            const rCount = values.filter(v => v === 'R' || v === 'A/R').length;
+            const aCount = values.filter(v => v === 'A' || v === 'A/R').length;
+            
+            const errors = [];
+            if (rCount === 0) errors.push('Aucun Responsable (R)');
+            else if (rCount > 1) errors.push(`${rCount} Responsables (R) - il en faut 1 seul`);
+            if (aCount === 0) errors.push('Aucune Approbation (A)');
+            else if (aCount > 1) errors.push(`${aCount} Approbations (A) - il en faut 1 seule`);
+            
+            return { isValid: errors.length === 0, errors: errors };
+          };
+
+          // Calcul des statistiques globales
+          const getGlobalStats = () => {
+            const validRows = rows.filter(row => validateRow(row.assignments).isValid).length;
+            return { validRows, totalRows: rows.length, invalidRows: rows.length - validRows };
+          };
+
+          // Fonction pour changer une attribution
+          const handleCellChange = (rowId, column) => {
+            setRows(prevRows => {
+              const newRows = prevRows.map(row => {
+                if (row.id === rowId) {
+                  const currentIndex = categories.indexOf(row.assignments[column] || '');
+                  const nextIndex = (currentIndex + 1) % categories.length;
+                  return {
+                    ...row,
+                    assignments: {
+                      ...row.assignments,
+                      [column]: categories[nextIndex]
+                    }
+                  };
+                }
+                return row;
+              });
+              saveToHistory(newRows, columns, sections, title, subtitle);
+              return newRows;
+            });
+          };
+
+          // Fonction pour ajouter une nouvelle ligne
+          const addRow = (sectionId = null) => {
+            const newRowId = `row${Date.now()}`;
+            const newRow = {
+              id: newRowId,
+              task: 'Nouvelle tâche',
+              sectionId: sectionId || (sections.length > 0 ? sections[0].id : null),
+              assignments: {}
+            };
+            columns.forEach(col => {
+              if (col.id !== 'task') {
+                newRow.assignments[col.id] = '';
+              }
+            });
+            const newRows = [...rows, newRow];
+            setRows(newRows);
+            saveToHistory(newRows, columns, sections, title, subtitle);
+          };
+
+          // Fonction pour dupliquer une ligne
+          const duplicateRow = (rowId) => {
+            const rowToDuplicate = rows.find(r => r.id === rowId);
+            if (rowToDuplicate) {
+              const newRowId = `row${Date.now()}`;
+              const newRow = {
+                ...rowToDuplicate,
+                id: newRowId,
+                task: rowToDuplicate.task + ' (copie)'
+              };
+              const rowIndex = rows.findIndex(r => r.id === rowId);
+              const newRows = [...rows];
+              newRows.splice(rowIndex + 1, 0, newRow);
+              setRows(newRows);
+              saveToHistory(newRows, columns, sections, title, subtitle);
+            }
+          };
+
+          // Fonction pour supprimer une ligne
+          const deleteRow = (rowId) => {
+            const newRows = rows.filter(row => row.id !== rowId);
+            setRows(newRows);
+            saveToHistory(newRows, columns, sections, title, subtitle);
+          };
+
+          // Fonction pour déplacer une ligne
+          const moveRow = (rowId, direction) => {
+            const index = rows.findIndex(r => r.id === rowId);
+            if ((direction === 'up' && index > 0) || (direction === 'down' && index < rows.length - 1)) {
+              const newRows = [...rows];
+              const newIndex = direction === 'up' ? index - 1 : index + 1;
+              [newRows[index], newRows[newIndex]] = [newRows[newIndex], newRows[index]];
+              setRows(newRows);
+              saveToHistory(newRows, columns, sections, title, subtitle);
+            }
+          };
+
+          // Fonction pour modifier le nom d'une tâche
+          const handleTaskNameChange = (rowId, newName) => {
+            setRows(prevRows => {
+              const newRows = prevRows.map(row => {
+                if (row.id === rowId) {
+                  return { ...row, task: newName };
+                }
+                return row;
+              });
+              saveToHistory(newRows, columns, sections, title, subtitle);
+              return newRows;
+            });
+          };
+
+          // Fonction pour ajouter une colonne
+          const addColumn = () => {
+            const newColId = `col${Date.now()}`;
+            const newColumn = { id: newColId, label: 'NOUVEAU' };
+            const newColumns = [...columns, newColumn];
+            const newRows = rows.map(row => ({
+              ...row,
+              assignments: { ...row.assignments, [newColId]: '' }
+            }));
+            setColumns(newColumns);
+            setRows(newRows);
+            saveToHistory(newRows, newColumns, sections, title, subtitle);
+          };
+
+          // Fonction pour supprimer une colonne
+          const deleteColumn = (colId) => {
+            if (columns.length <= 2) {
+              alert('Vous devez avoir au moins 2 colonnes (Actions + 1 praticien)');
+              return;
+            }
+            if (confirm('Voulez-vous vraiment supprimer cette colonne ?')) {
+              const newColumns = columns.filter(col => col.id !== colId);
+              const newRows = rows.map(row => {
+                const newAssignments = { ...row.assignments };
+                delete newAssignments[colId];
+                return { ...row, assignments: newAssignments };
+              });
+              setColumns(newColumns);
+              setRows(newRows);
+              saveToHistory(newRows, newColumns, sections, title, subtitle);
+            }
+          };
+
+          // Fonction pour éditer le nom d'une colonne
+          const handleColumnNameChange = (colId, newLabel) => {
+            const newColumns = columns.map(col => 
+              col.id === colId ? { ...col, label: newLabel } : col
+            );
+            setColumns(newColumns);
+            saveToHistory(rows, newColumns, sections, title, subtitle);
+          };
+
+          // Fonctions pour gérer les sections
+          const addSection = () => {
+            const newSectionId = `section${Date.now()}`;
+            const newSection = { id: newSectionId, name: 'Nouvelle section', collapsed: false };
+            setSections([...sections, newSection]);
+          };
+
+          const toggleSection = (sectionId) => {
+            setSections(sections.map(s => 
+              s.id === sectionId ? { ...s, collapsed: !s.collapsed } : s
+            ));
+          };
+
+          const editSectionName = (sectionId, newName) => {
+            setSections(sections.map(s => 
+              s.id === sectionId ? { ...s, name: newName } : s
+            ));
+          };
+
+          const deleteSection = (sectionId) => {
+            if (confirm('Supprimer cette section ? Les tâches associées passeront en "Sans section".')) {
+              setSections(sections.filter(s => s.id !== sectionId));
+              const newRows = rows.map(r => 
+                r.sectionId === sectionId ? { ...r, sectionId: null } : r
+              );
+              setRows(newRows);
+            }
+          };
+
+          // Fonction de réinitialisation
+          const resetToDefault = () => {
+            if (confirm('Voulez-vous vraiment réinitialiser la matrice aux valeurs par défaut ? Toutes vos modifications seront perdues.')) {
+              setRows(defaultRows);
+              setColumns(defaultColumns);
+              setSections(defaultSections);
+              setTitle('MATRICE RACI - MODÈLE PÉDAGOGIQUE');
+              setSubtitle('EXEMPLE DE RÉPARTITION DES RÔLES EN MSP');
+              setColorTheme('green');
+              setAutoNumbering(true);
+              setHistory([{
+                rows: defaultRows,
+                columns: defaultColumns,
+                sections: defaultSections,
+                title: 'MATRICE RACI - MODÈLE PÉDAGOGIQUE',
+                subtitle: 'EXEMPLE DE RÉPARTITION DES RÔLES EN MSP'
+              }]);
+              setHistoryIndex(0);
+            }
+          };
+
+          // Fonction pour générer un lien de partage
+          const generateShareLink = () => {
+            try {
+              const dataToShare = { rows, columns, sections, title, subtitle, colorTheme };
+              const jsonString = JSON.stringify(dataToShare);
+              const compressed = LZString.compressToEncodedURIComponent(jsonString);
+              const url = `${window.location.origin}${window.location.pathname}?data=${compressed}`;
+              
+              navigator.clipboard.writeText(url).then(() => {
+                alert('Lien de partage copié dans le presse-papiers !');
+              }).catch(() => {
+                prompt('Copiez ce lien pour partager votre matrice :', url);
+              });
+            } catch (e) {
+              console.error('Erreur lors de la génération du lien:', e);
+              alert('Erreur : la matrice est trop volumineuse pour être partagée par lien.');
+            }
+          };
+
+          // Chargement depuis URL au démarrage
+          useEffect(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+            if (dataParam) {
+              try {
+                const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
+                const data = JSON.parse(decompressed);
+                setRows(data.rows);
+                setColumns(data.columns);
+                setSections(data.sections || []);
+                setTitle(data.title);
+                setSubtitle(data.subtitle);
+                setColorTheme(data.colorTheme || 'green');
+              } catch (e) {
+                console.error('Erreur lors du chargement du lien partagé:', e);
+              }
+            }
+          }, []);
+
+          // Fonction d'export PDF
+          const exportToPDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF(pdfOrientation);
+            
+            doc.setFontSize(18);
+            doc.setTextColor(62, 107, 97);
+            doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'italic');
+            doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 23, { align: 'center' });
+            
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            const now = new Date();
+            const dateStr = `Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')}`;
+            doc.text(dateStr, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            
+            const headers = [['✓', 'Actions', ...columns.map(c => c.label)]];
+            
+            const data = rows.map(row => {
+              const validation = validateRow(row.assignments);
+              return [
+                validation.isValid ? '✓' : '⚠',
+                row.task,
+                ...columns.map(col => row.assignments[col.id] || '')
+              ];
+            });
+            
+            const getColorForValue = (value) => {
+              const theme = COLOR_THEMES[colorTheme];
+              switch (value) {
+                case 'R': return theme.R.match(/\w\w/g).map(x => parseInt(x, 16));
+                case 'A': return theme.A.match(/\w\w/g).map(x => parseInt(x, 16));
+                case 'C': return theme.C.match(/\w\w/g).map(x => parseInt(x, 16));
+                case 'I': return theme.I.match(/\w\w/g).map(x => parseInt(x, 16));
+                case 'A/R': return theme.R.match(/\w\w/g).map(x => parseInt(x, 16));
+                default: return [245, 245, 245];
+              }
+            };
+            
+            doc.autoTable({
+              head: headers,
+              body: data,
+              startY: 35,
+              theme: 'grid',
+              headStyles: {
+                fillColor: [245, 245, 245],
+                textColor: [0, 0, 0],
+                fontStyle: 'bold',
+                halign: 'center',
+                fontSize: 9
+              },
+              bodyStyles: {
+                fontSize: 8,
+                cellPadding: 2
+              },
+              columnStyles: {
+                0: { halign: 'center', cellWidth: 10 },
+                1: { cellWidth: pdfOrientation === 'landscape' ? 60 : 50 }
+              },
+              didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index > 1) {
+                  const value = data.cell.raw;
+                  if (value && value !== '') {
+                    const color = getColorForValue(value);
+                    data.cell.styles.fillColor = color;
+                    data.cell.styles.textColor = [255, 255, 255];
+                    data.cell.styles.fontStyle = 'bold';
+                  }
+                }
+                if (data.section === 'body' && data.column.index === 0) {
+                  if (data.cell.raw === '⚠') {
+                    data.cell.styles.textColor = [255, 140, 0];
+                  } else {
+                    data.cell.styles.textColor = [34, 139, 34];
+                  }
+                }
+              },
+              margin: { top: 35, right: 10, bottom: 25, left: 10 }
+            });
+            
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            doc.setFont(undefined, 'bold');
+            doc.text('Légende :', 15, finalY);
+            
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(9);
+            let legendY = finalY + 5;
+            
+            const theme = COLOR_THEMES[colorTheme];
+            const legendItems = [
+              { letter: 'R', color: theme.R, text: 'R = Responsable (réalise la tâche)' },
+              { letter: 'A', color: theme.A, text: 'A = Approbation (décide et valide)' },
+              { letter: 'C', color: theme.C, text: 'C = Consulté (donne son avis)' },
+              { letter: 'I', color: theme.I, text: 'I = Informé (tenu au courant)' }
+            ];
+            
+            legendItems.forEach((item, index) => {
+              const x = index < 2 ? 15 : 90;
+              const y = legendY + (index % 2) * 7;
+              const rgb = item.color.match(/\w\w/g).map(x => parseInt(x, 16));
+              doc.setFillColor(...rgb);
+              doc.rect(x, y, 8, 5, 'F');
+              doc.setTextColor(0);
+              doc.text(item.text, x + 10, y + 3.5);
+            });
+            
+            const filename = `matrice-raci-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.pdf`;
+            doc.save(filename);
+          };
+
+          // Couleurs associées aux différentes responsabilités
+          const getCellColor = (value) => {
+            const theme = COLOR_THEMES[colorTheme];
+            switch (value) {
+              case 'R': return theme.R;
+              case 'A': return theme.A;
+              case 'C': return theme.C;
+              case 'I': return theme.I;
+              case 'A/R': return theme.R;
+              default: return '#f5f5f5';
+            }
+          };
+
+          const legendColors = COLOR_THEMES[colorTheme];
+          const headerColor = '#f5f5f5';
+          const taskColor = '#f5f5f5';
+          const stats = getGlobalStats();
+
+          // Renumérotation automatique
+          const getDisplayTask = (task, index) => {
+            if (!autoNumbering) return task;
+            // Si la tâche commence déjà par un numéro, le remplacer
+            const match = task.match(/^[\d.]+\s+(.+)$/);
+            if (match) {
+              return `${index + 1}. ${match[1]}`;
+            }
+            return `${index + 1}. ${task}`;
+          };
+
+          return (
+            <div className="flex flex-col w-full max-w-7xl mx-auto p-4 bg-white shadow-lg rounded-lg my-6">
+              {/* Panneau d'aide dépliable */}
+              <div className="mb-4 bg-blue-50 rounded-lg border border-blue-200 no-print">
+                <div 
+                  className="p-4 cursor-pointer flex items-center justify-between"
+                  onClick={() => setShowHelp(!showHelp)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">ℹ️</span>
+                    <h3 className="font-bold text-blue-900">Aide : Qu'est-ce qu'une matrice RACI ?</h3>
+                  </div>
+                  <span className="text-blue-600 text-xl">{showHelp ? '▼' : '▶'}</span>
+                </div>
+                
+                <div className={`help-panel ${showHelp ? 'open' : ''}`}>
+                  <div className="px-4 pb-4 space-y-4">
+                    <div className="bg-white p-4 rounded border border-blue-100">
+                      <h4 className="font-semibold text-blue-800 mb-2">📖 Définition</h4>
+                      <p className="text-sm text-gray-700">
+                        La matrice RACI est un outil de gestion qui clarifie les rôles et responsabilités de chaque acteur pour chaque tâche d'un projet. 
+                        RACI est un acronyme pour : <strong>R</strong>esponsable, <strong>A</strong>pprobateur, <strong>C</strong>onsulté, <strong>I</strong>nformé.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 flex items-center justify-center text-white font-bold rounded" style={{backgroundColor: legendColors.R}}>R</div>
+                          <h5 className="font-semibold">Responsable</h5>
+                        </div>
+                        <p className="text-sm text-gray-700">Réalise la tâche. C'est celui qui "fait". <strong>Il doit y avoir UN SEUL R par tâche.</strong></p>
+                      </div>
+
+                      <div className="bg-white p-4 rounded border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 flex items-center justify-center text-white font-bold rounded" style={{backgroundColor: legendColors.A}}>A</div>
+                          <h5 className="font-semibold">Approbateur</h5>
+                        </div>
+                        <p className="text-sm text-gray-700">Approuve et valide. C'est celui qui décide. <strong>Il doit y avoir UN SEUL A par tâche.</strong></p>
+                      </div>
+
+                      <div className="bg-white p-4 rounded border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 flex items-center justify-center text-white font-bold rounded" style={{backgroundColor: legendColors.C}}>C</div>
+                          <h5 className="font-semibold">Consulté</h5>
+                        </div>
+                        <p className="text-sm text-gray-700">Donne son avis, expertise. Communication bidirectionnelle. <strong>Peut être multiple.</strong></p>
+                      </div>
+
+                      <div className="bg-white p-4 rounded border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 flex items-center justify-center text-white font-bold rounded" style={{backgroundColor: legendColors.I}}>I</div>
+                          <h5 className="font-semibold">Informé</h5>
+                        </div>
+                        <p className="text-sm text-gray-700">Tenu au courant des résultats. Communication unidirectionnelle. <strong>Peut être multiple.</strong></p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded border border-blue-100">
+                      <h4 className="font-semibold text-blue-800 mb-2">🎯 Guide d'utilisation de l'interface</h4>
+                      <ul className="text-sm text-gray-700 space-y-2">
+                        <li>• <strong>Cliquer sur une cellule</strong> : Change la valeur (R → A → C → I → A/R → vide)</li>
+                        <li>• <strong>Éditer les en-têtes</strong> : Cliquez sur le nom d'un praticien pour le modifier</li>
+                        <li>• <strong>Ajouter une colonne</strong> : Bouton "+ Colonne" pour ajouter un nouveau praticien</li>
+                        <li>• <strong>Réorganiser</strong> : Utilisez les flèches ↑↓ pour déplacer les lignes</li>
+                        <li>• <strong>Dupliquer</strong> : Bouton "📋" pour copier une ligne existante</li>
+                        <li>• <strong>Annuler/Refaire</strong> : Ctrl+Z / Ctrl+Y ou les boutons en haut</li>
+                        <li>• <strong>Export PDF</strong> : Choisissez l'orientation puis téléchargez</li>
+                        <li>• <strong>Partager</strong> : Générez un lien pour partager votre matrice</li>
+                        <li>• <strong>Sections</strong> : Cliquez sur le nom d'une section pour la replier/déplier</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* En-tête avec légende */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center mb-2">
+                    <div className="tooltip">
+                      <div className="text-white flex items-center justify-center mr-2 text-lg" style={{ 
+                        backgroundColor: legendColors.R,
+                        width: "50px",
+                        height: "50px"
+                      }}>R</div>
+                      <span className="tooltiptext">Responsable : Réalise la tâche. Un seul par ligne.</span>
+                    </div>
+                    <span>Responsable</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="tooltip">
+                      <div className="text-white flex items-center justify-center mr-2 text-lg" style={{ 
+                        backgroundColor: legendColors.A,
+                        width: "50px",
+                        height: "50px"
+                      }}>A</div>
+                      <span className="tooltiptext">Approbateur : Décide et valide. Un seul par ligne.</span>
+                    </div>
+                    <span>Approbation</span>
+                  </div>
+                </div>
+                <div className="flex-2 text-center">
+                  <input 
+                    type="text" 
+                    value={title} 
+                    onChange={(e) => setTitle(e.target.value)} 
+                    className="text-2xl font-bold text-center border-b-2 border-transparent focus:border-blue-500 focus:outline-none"
+                    style={{ color: legendColors.R }}
+                  />
+                  <br />
+                  <input 
+                    type="text" 
+                    value={subtitle} 
+                    onChange={(e) => setSubtitle(e.target.value)} 
+                    className="text-xl italic text-center border-b-2 border-transparent focus:border-blue-500 focus:outline-none"
+                    style={{ color: legendColors.R }}
+                  />
+                </div>
+                <div className="flex-1 text-right">
+                  <div className="flex items-center justify-end mb-2">
+                    <span>Consulté</span>
+                    <div className="tooltip">
+                      <div className="text-white flex items-center justify-center ml-2 text-lg" style={{ 
+                        backgroundColor: legendColors.C,
+                        width: "50px",
+                        height: "50px"
+                      }}>C</div>
+                      <span className="tooltiptext">Consulté : Donne son avis. Peut être multiple.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <span>Informé</span>
+                    <div className="tooltip">
+                      <div className="text-white flex items-center justify-center ml-2 text-lg" style={{ 
+                        backgroundColor: legendColors.I,
+                        width: "50px",
+                        height: "50px"
+                      }}>I</div>
+                      <span className="tooltiptext">Informé : Tenu au courant. Peut être multiple.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Barre d'outils principale */}
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm font-semibold">État :</div>
+                    <span className="text-sm">
+                      <span className="text-green-600 font-bold">{stats.validRows}</span> / {stats.totalRows} valides
+                    </span>
+                    {stats.invalidRows > 0 && (
+                      <span className="text-sm text-orange-600 font-bold">
+                        {stats.invalidRows} à corriger
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2 no-print flex-wrap">
+                    <div className="tooltip">
+                      <button 
+                        onClick={undo}
+                        disabled={historyIndex === 0}
+                        className={`px-3 py-2 rounded text-sm ${historyIndex === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        ↶
+                      </button>
+                      <span className="tooltiptext">Annuler (Ctrl+Z)</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <button 
+                        onClick={redo}
+                        disabled={historyIndex === history.length - 1}
+                        className={`px-3 py-2 rounded text-sm ${historyIndex === history.length - 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        ↷
+                      </button>
+                      <span className="tooltiptext">Refaire (Ctrl+Y)</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <select 
+                        value={pdfOrientation}
+                        onChange={(e) => setPdfOrientation(e.target.value)}
+                        className="px-3 py-2 rounded border border-gray-300 text-sm"
+                      >
+                        <option value="landscape">📄 Paysage</option>
+                        <option value="portrait">📑 Portrait</option>
+                      </select>
+                      <span className="tooltiptext">Orientation du PDF</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <button 
+                        onClick={exportToPDF}
+                        className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm"
+                      >
+                        📥 PDF
+                      </button>
+                      <span className="tooltiptext">Télécharger en PDF</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <button 
+                        onClick={generateShareLink}
+                        className="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 text-sm"
+                      >
+                        🔗 Partager
+                      </button>
+                      <span className="tooltiptext">Générer un lien de partage</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <select 
+                        value={colorTheme}
+                        onChange={(e) => setColorTheme(e.target.value)}
+                        className="px-3 py-2 rounded border border-gray-300 text-sm"
+                      >
+                        {Object.entries(COLOR_THEMES).map(([key, theme]) => (
+                          <option key={key} value={key}>🎨 {theme.name}</option>
+                        ))}
+                      </select>
+                      <span className="tooltiptext">Changer le thème de couleurs</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <button 
+                        onClick={() => setAutoNumbering(!autoNumbering)}
+                        className={`px-3 py-2 rounded text-sm ${autoNumbering ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-700'}`}
+                      >
+                        {autoNumbering ? '🔢' : '⏸️'}
+                      </button>
+                      <span className="tooltiptext">{autoNumbering ? 'Numérotation activée' : 'Numérotation désactivée'}</span>
+                    </div>
+
+                    <div className="tooltip">
+                      <button 
+                        onClick={resetToDefault}
+                        className="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 text-sm"
+                      >
+                        🔄
+                      </button>
+                      <span className="tooltiptext">Réinitialiser</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gestion des sections */}
+              <div className="mb-4 no-print">
+                <button 
+                  onClick={addSection}
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
+                >
+                  + Ajouter une section
+                </button>
+              </div>
+
+              {/* Tableau principal */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th 
+                        className="p-2 font-semibold text-center text-sm border w-8"
+                        style={{ backgroundColor: headerColor }}
+                      >
+                        ✓
+                      </th>
+                      <th 
+                        className="p-2 font-semibold text-center text-sm border w-1/4"
+                        style={{ backgroundColor: headerColor }}
+                      >
+                        Actions
+                      </th>
+                      {columns.map((col) => (
+                        <th 
+                          key={col.id}
+                          className="p-2 font-semibold text-center text-sm border relative"
+                          style={{ 
+                            backgroundColor: headerColor,
+                            height: '180px',
+                            verticalAlign: 'bottom'
+                          }}
+                        >
+                          <div className="no-print absolute top-2 right-2">
+                            <button
+                              onClick={() => deleteColumn(col.id)}
+                              className="text-red-600 hover:text-red-800 text-xs"
+                              title="Supprimer cette colonne"
+                            >
+                              ❌
+                            </button>
+                          </div>
+                          <div style={{
+                            transform: 'rotate(-45deg)',
+                            transformOrigin: 'center center',
+                            whiteSpace: 'nowrap',
+                            position: 'absolute',
+                            bottom: '35px',
+                            left: '50%',
+                            marginLeft: '-65px',
+                            width: '130px'
+                          }}>
+                            <input 
+                              type="text" 
+                              value={col.label}
+                              onChange={(e) => handleColumnNameChange(col.id, e.target.value)}
+                              className="bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none text-center w-full"
+                              style={{ fontSize: '10px', fontWeight: 'bold' }}
+                            />
+                          </div>
+                        </th>
+                      ))}
+                      <th className="p-2 font-semibold text-center text-sm border no-print" style={{ 
+                        backgroundColor: headerColor,
+                        height: '180px',
+                        verticalAlign: 'bottom'
+                      }}>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Affichage par sections */}
+                    {sections.map(section => {
+                      const sectionRows = rows.filter(r => r.sectionId === section.id);
+                      if (sectionRows.length === 0) return null;
+                      
+                      return (
+                        <React.Fragment key={section.id}>
+                          <tr className="section-header" onClick={() => toggleSection(section.id)}>
+                            <td colSpan={columns.length + 3} className="p-3 text-white font-bold">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span>{section.collapsed ? '▶' : '▼'}</span>
+                                  <input
+                                    type="text"
+                                    value={section.name}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      editSectionName(section.id, e.target.value);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="bg-transparent border-b border-white/50 focus:border-white focus:outline-none"
+                                  />
+                                </div>
+                                <div className="no-print">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addRow(section.id);
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-sm mr-2"
+                                  >
+                                    + Tâche
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteSection(section.id);
+                                    }}
+                                    className="bg-red-500/50 hover:bg-red-600 px-2 py-1 rounded text-sm"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                          
+                          {!section.collapsed && sectionRows.map((row, index) => {
+                            const validation = validateRow(row.assignments);
+                            return (
+                              <tr key={row.id} className={!validation.isValid ? 'bg-orange-50' : ''}>
+                                <td className="p-1 border text-center">
+                                  {validation.isValid ? (
+                                    <span className="text-green-600 text-xl" title="Tâche valide">✓</span>
+                                  ) : (
+                                    <div className="tooltip">
+                                      <span className="text-orange-600 text-xl cursor-help">⚠</span>
+                                      <span className="tooltiptext">{validation.errors.join('\n')}</span>
+                                    </div>
+                                  )}
+                                </td>
+                                <td 
+                                  className="p-2 border"
+                                  style={{ backgroundColor: taskColor }}
+                                >
+                                  <input 
+                                    type="text" 
+                                    value={getDisplayTask(row.task, rows.indexOf(row))} 
+                                    onChange={(e) => {
+                                      let newValue = e.target.value;
+                                      if (autoNumbering) {
+                                        const match = newValue.match(/^[\d.]+\s+(.+)$/);
+                                        if (match) newValue = match[1];
+                                      }
+                                      handleTaskNameChange(row.id, newValue);
+                                    }}
+                                    className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none text-sm"
+                                  />
+                                  {!validation.isValid && (
+                                    <div className="text-xs text-orange-600 mt-1 no-print">
+                                      {validation.errors.join(' • ')}
+                                    </div>
+                                  )}
+                                </td>
+                                {columns.map((col) => (
+                                  <td key={`${row.id}-${col.id}`} className="p-1 border text-center">
+                                    <div className="tooltip">
+                                      <div 
+                                        className="text-center text-white font-bold cursor-pointer flex items-center justify-center text-lg mx-auto"
+                                        style={{ 
+                                          backgroundColor: getCellColor(row.assignments[col.id]),
+                                          width: "55px",
+                                          height: "55px"
+                                        }}
+                                        onClick={() => handleCellChange(row.id, col.id)}
+                                      >
+                                        {row.assignments[col.id]}
+                                      </div>
+                                      <span className="tooltiptext">Cliquer pour changer (R/A/C/I/A/R/vide)</span>
+                                    </div>
+                                  </td>
+                                ))}
+                                <td className="p-2 border text-center no-print">
+                                  <div className="flex gap-1 justify-center">
+                                    <div className="tooltip">
+                                      <button 
+                                        onClick={() => moveRow(row.id, 'up')}
+                                        disabled={rows.indexOf(row) === 0}
+                                        className={`px-2 py-1 rounded text-xs ${rows.indexOf(row) === 0 ? 'bg-gray-200 text-gray-400' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                      >
+                                        ↑
+                                      </button>
+                                      <span className="tooltiptext">Monter</span>
+                                    </div>
+                                    <div className="tooltip">
+                                      <button 
+                                        onClick={() => moveRow(row.id, 'down')}
+                                        disabled={rows.indexOf(row) === rows.length - 1}
+                                        className={`px-2 py-1 rounded text-xs ${rows.indexOf(row) === rows.length - 1 ? 'bg-gray-200 text-gray-400' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                      >
+                                        ↓
+                                      </button>
+                                      <span className="tooltiptext">Descendre</span>
+                                    </div>
+                                    <div className="tooltip">
+                                      <button 
+                                        onClick={() => duplicateRow(row.id)}
+                                        className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                                      >
+                                        📋
+                                      </button>
+                                      <span className="tooltiptext">Dupliquer</span>
+                                    </div>
+                                    <div className="tooltip">
+                                      <button 
+                                        onClick={() => deleteRow(row.id)}
+                                        className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                                      >
+                                        X
+                                      </button>
+                                      <span className="tooltiptext">Supprimer</span>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
+                    
+                    {/* Lignes sans section */}
+                    {rows.filter(r => !r.sectionId).map((row) => {
+                      const validation = validateRow(row.assignments);
+                      return (
+                        <tr key={row.id} className={!validation.isValid ? 'bg-orange-50' : ''}>
+                          <td className="p-1 border text-center">
+                            {validation.isValid ? (
+                              <span className="text-green-600 text-xl" title="Tâche valide">✓</span>
+                            ) : (
+                              <div className="tooltip">
+                                <span className="text-orange-600 text-xl cursor-help">⚠</span>
+                                <span className="tooltiptext">{validation.errors.join('\n')}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td 
+                            className="p-2 border"
+                            style={{ backgroundColor: taskColor }}
+                          >
+                            <input 
+                              type="text" 
+                              value={getDisplayTask(row.task, rows.indexOf(row))} 
+                              onChange={(e) => {
+                                let newValue = e.target.value;
+                                if (autoNumbering) {
+                                  const match = newValue.match(/^[\d.]+\s+(.+)$/);
+                                  if (match) newValue = match[1];
+                                }
+                                handleTaskNameChange(row.id, newValue);
+                              }}
+                              className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none text-sm"
+                            />
+                            {!validation.isValid && (
+                              <div className="text-xs text-orange-600 mt-1 no-print">
+                                {validation.errors.join(' • ')}
+                              </div>
+                            )}
+                          </td>
+                          {columns.map((col) => (
+                            <td key={`${row.id}-${col.id}`} className="p-1 border text-center">
+                              <div className="tooltip">
+                                <div 
+                                  className="text-center text-white font-bold cursor-pointer flex items-center justify-center text-lg mx-auto"
+                                  style={{ 
+                                    backgroundColor: getCellColor(row.assignments[col.id]),
+                                    width: "55px",
+                                    height: "55px"
+                                  }}
+                                  onClick={() => handleCellChange(row.id, col.id)}
+                                >
+                                  {row.assignments[col.id]}
+                                </div>
+                                <span className="tooltiptext">Cliquer pour changer (R/A/C/I/A/R/vide)</span>
+                              </div>
+                            </td>
+                          ))}
+                          <td className="p-2 border text-center no-print">
+                            <div className="flex gap-1 justify-center">
+                              <div className="tooltip">
+                                <button 
+                                  onClick={() => moveRow(row.id, 'up')}
+                                  disabled={rows.indexOf(row) === 0}
+                                  className={`px-2 py-1 rounded text-xs ${rows.indexOf(row) === 0 ? 'bg-gray-200 text-gray-400' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                >
+                                  ↑
+                                </button>
+                                <span className="tooltiptext">Monter</span>
+                              </div>
+                              <div className="tooltip">
+                                <button 
+                                  onClick={() => moveRow(row.id, 'down')}
+                                  disabled={rows.indexOf(row) === rows.length - 1}
+                                  className={`px-2 py-1 rounded text-xs ${rows.indexOf(row) === rows.length - 1 ? 'bg-gray-200 text-gray-400' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                >
+                                  ↓
+                                </button>
+                                <span className="tooltiptext">Descendre</span>
+                              </div>
+                              <div className="tooltip">
+                                <button 
+                                  onClick={() => duplicateRow(row.id)}
+                                  className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                                >
+                                  📋
+                                </button>
+                                <span className="tooltiptext">Dupliquer</span>
+                              </div>
+                              <div className="tooltip">
+                                <button 
+                                  onClick={() => deleteRow(row.id)}
+                                  className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                                >
+                                  X
+                                </button>
+                                <span className="tooltiptext">Supprimer</span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Boutons d'ajout en bas */}
+              <div className="mt-4 flex gap-2 no-print">
+                <button 
+                  onClick={() => addRow()}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  + Ajouter une tâche
+                </button>
+                <button 
+                  onClick={addColumn}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                >
+                  + Ajouter une colonne
+                </button>
+              </div>
+
+              {/* Footer informatif */}
+              <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200 no-print">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-600 text-xl">💾</span>
+                  <h3 className="font-semibold text-green-900">Sauvegarde automatique activée</h3>
+                </div>
+                <p className="text-sm text-green-800">
+                  Toutes vos modifications sont automatiquement sauvegardées. Historique : {historyIndex + 1}/{history.length}
+                </p>
+              </div>
+
+              <div className="mt-4 text-sm text-gray-600 text-center">
+                <p>Matrice RACI v4.0 Ultimate • Développée pour les Maisons de Santé Pluriprofessionnelles</p>
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<MatriceRaci />, document.getElementById('root'));
+    </script>
+</body>
+</html>
